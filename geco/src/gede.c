@@ -7,6 +7,8 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <pthread.h>
+#include <stdbool.h>
 
 #include "mem.h"
 #include "defs.h"
@@ -20,11 +22,13 @@
 ///////////////////////////////////////////////////////////
 ////////// RAM USAGE //////////////////////////////////////
 
+extern void* monitor_cpu_usage(void* arg);
+volatile bool keep_running = true;
+
 unsigned long mem_total, mem_free_beg, mem_free_end, mem_used;
 int avgUsage;
-int usage[5];
 
-extern int get_cpu_usage(int pid);
+extern void get_cpu_usage(int pid);
 
 void get_memory_usage(unsigned long* total, unsigned long* free) {
     FILE* file = fopen("/proc/meminfo", "r");
@@ -479,12 +483,12 @@ int32_t main(int argc, char *argv[]){
 
   ////////////////////////////////////////////////
   /////////// CPU AND MEM USAGE //////////////////
-  usage[4] = get_cpu_usage(getpid());
+  get_cpu_usage(getpid());
 
   get_memory_usage(&mem_total, &mem_free_end);
   mem_used = mem_free_beg - mem_free_end;
   printf("\nMemory used: %lu out of %lu kb", mem_used, mem_total);
-  printf("\nCPU usage: %d", usage[4]);
+  printf("\nCPU usage: %d", avgUsage);
 
   ////////////////////////////////////////////////
 
