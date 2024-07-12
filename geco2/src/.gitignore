@@ -1,3 +1,8 @@
 CMakeLists.txt
 Makefile
 *.o
+CMakeCache.txt
+cmake_install.cmake
+GeCo2
+GeDe2
+CMakeFiles
