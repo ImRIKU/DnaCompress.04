@@ -5,6 +5,9 @@
 #include <float.h>
 #include <ctype.h>
 #include <time.h>
+#include <unistd.h>
+#include <sys/types.h>
+
 #include "mem.h"
 #include "defs.h"
 #include "buffer.h"
@@ -13,6 +16,35 @@
 #include "bitio.h"
 #include "arith.h"
 #include "arith_aux.h"
+
+///////////////////////////////////////////////////////////
+////////// RAM USAGE //////////////////////////////////////
+
+unsigned long mem_total, mem_free_beg, mem_free_end, mem_used;
+int avgUsage;
+int usage[5];
+
+extern int get_cpu_usage(int pid);
+
+void get_memory_usage(unsigned long* total, unsigned long* free) {
+    FILE* file = fopen("/proc/meminfo", "r");
+    if (!file) {
+        perror("fopen");
+        exit(EXIT_FAILURE);
+    }
+
+    char buffer[256];
+    while (fgets(buffer, sizeof(buffer), file)) {
+        if (sscanf(buffer, "MemTotal: %lu kB", total) == 1 ||
+            sscanf(buffer, "MemFree: %lu kB", free) == 1) {
+            // Do nothing, just parsing
+        }
+    }
+
+    fclose(file);
+}
+
+//////////////////////////////////////////////////////////
 
 //////////////////////////////////////////////////////////////////////////////
 // - - - - - - - - - - - - - - D E C O M P R E S S O R - - - - - - - - - - - -
@@ -329,6 +361,14 @@ int32_t main(int argc, char *argv[]){
   FILE        *Reader = NULL;
   uint8_t     help, verbose, force, nTar = 1;
   clock_t     stop = 0, start = clock();
+
+  //////////////////////////////////////////
+  /////////   MEM USAGE CALCULATE //////////
+
+  get_memory_usage(&mem_total, &mem_free_beg);
+
+  /////////////////////////////////////////
+
   
   if((help = ArgsState(DEFAULT_HELP, p, argc, "-h")) == 1 || argc < 2){
     fprintf(stderr,
@@ -436,6 +476,17 @@ int32_t main(int argc, char *argv[]){
 
   stop = clock();
   fprintf(stderr, "Spent %g sec.\n", ((double)(stop-start))/CLOCKS_PER_SEC);
+
+  ////////////////////////////////////////////////
+  /////////// CPU AND MEM USAGE //////////////////
+  usage[4] = get_cpu_usage(getpid());
+
+  get_memory_usage(&mem_total, &mem_free_end);
+  mem_used = mem_free_beg - mem_free_end;
+  printf("\nMemory used: %lu out of %lu kb", mem_used, mem_total);
+  printf("\nCPU usage: %d", usage[4]);
+
+  ////////////////////////////////////////////////
 
   return EXIT_SUCCESS;
   }
