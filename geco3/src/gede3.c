@@ -570,7 +570,8 @@ int32_t main(int argc, char *argv[]){
 
 
   get_memory_usage(&mem_total, &mem_free_end);
-  mem_used = mem_free_beg - mem_free_end;
+  if(mem_free_beg > mem_free_end)
+    mem_used = mem_free_beg - mem_free_end;
   ram_total = (int)(mem_total / 1000);
   if(ram_avg == 0) ram_avg=1;
   printf("\nMemory used: %lu out of %lu kb", mem_used, mem_total);
