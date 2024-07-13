@@ -541,6 +541,9 @@ int32_t main(int argc, char *argv[]){
     totalBytes  += I[n].bytes;
     headerBytes += I[n].header;
     }
+    /////////// CPU AND MEM USAGE //////////////////
+    usage[0] = get_cpu_usage(getpid());
+
 
   if(P->nTar > 1)
     for(n = 0 ; n < P->nTar ; ++n){
@@ -550,6 +553,8 @@ int32_t main(int argc, char *argv[]){
       fprintf(stdout, ") , Normalized Dissimilarity Rate: %.6g\n", 
       (8.0*I[n].bytes)/(2*I[n].size));
       }
+  /////////// CPU AND MEM USAGE //////////////////
+  usage[1] = get_cpu_usage(getpid());
 
 
   fprintf(stdout, "Total bytes: %"PRIu64" (", totalBytes);
@@ -562,12 +567,19 @@ int32_t main(int argc, char *argv[]){
 
   ////////////////////////////////////////////////
   /////////// CPU AND MEM USAGE //////////////////
-  usage[4] = get_cpu_usage(getpid());
+  usage[2] = get_cpu_usage(getpid());
+  int sum_cpu = 0, ix, avg_cpu;
+  for (ix = 0; ix < 3; ix++){
+    sum_cpu += usage[ix];
+  }
+
+  avg_cpu = sum_cpu/3;
+  
 
   get_memory_usage(&mem_total, &mem_free_end);
   mem_used = mem_free_beg - mem_free_end;
   printf("\nMemory used: %lu out of %lu kb", mem_used, mem_total);
-  printf("\nCPU usage: %d", usage[4]);
+  printf("\nCPU usage: %d", avg_cpu);
 
   ////////////////////////////////////////////////
 
