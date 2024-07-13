@@ -153,6 +153,7 @@ void Decompress(Parameters *P, CModel **cModels, uint8_t id){
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         }
+
       ++n;
       }
 
@@ -464,7 +465,7 @@ int32_t main(int argc, char *argv[]){
 
   if(P->verbose && refNModels != 0)
     fprintf(stderr, "Checksum: %"PRIu64"\n", P->checksum); 
-
+  
   for(n = 0 ; n < nTar ; ++n){
     if(refNModels != 0){
       if(CmpCheckSum(checksum[n], P[0].checksum) == 0)
@@ -474,17 +475,27 @@ int32_t main(int argc, char *argv[]){
       Decompress(P, refModels, n);
     }
 
+    /////////// CPU AND MEM USAGE //////////////////
+    usage[0] = get_cpu_usage(getpid());
+
   stop = clock();
   fprintf(stderr, "Spent %g sec.\n", ((double)(stop-start))/CLOCKS_PER_SEC);
 
   ////////////////////////////////////////////////
   /////////// CPU AND MEM USAGE //////////////////
-  usage[4] = get_cpu_usage(getpid());
+  usage[1] = get_cpu_usage(getpid());
+
+  int sum_cpu = 0, ix, avg_cpu;
+  for (ix = 0; ix < 2; ix++){
+    sum_cpu += usage[ix];
+  }
+
+  avg_cpu = sum_cpu/2;
 
   get_memory_usage(&mem_total, &mem_free_end);
   mem_used = mem_free_beg - mem_free_end;
   printf("\nMemory used: %lu out of %lu kb", mem_used, mem_total);
-  printf("\nCPU usage: %d", usage[4]);
+  printf("\nCPU usage: %d%%\n", avg_cpu);
 
   ////////////////////////////////////////////////
 
