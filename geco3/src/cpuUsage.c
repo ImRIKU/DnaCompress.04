@@ -92,13 +92,15 @@ void* get_cpu_usage(void* arg) {
 
         // Get the RAM usage
         if (fgets(buffer, sizeof(buffer), fp) != NULL) {
-            arr2[count++] = atoi(buffer);
+            arr2[count] = atoi(buffer);
+            //printf("\nRAM: %d\n", arr2[count]);
         } 
         else {
             printf("Failed to retrieve RAM usage\n");
         }
         
         pclose(fp);
+        count++;
 
         sleep(1);
     }

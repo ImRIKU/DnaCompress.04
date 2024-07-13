@@ -22,13 +22,12 @@
 ///////////////////////////////////////////////////////////
 ////////// RAM USAGE //////////////////////////////////////
 
-extern void* monitor_cpu_usage(void* arg);
 volatile bool keep_running = true;
 
 unsigned long mem_total, mem_free_beg, mem_free_end, mem_used;
-int avgUsage;
+int cpu_avg, ram_total, ram_avg;
 
-extern void get_cpu_usage(int pid);
+extern void* get_cpu_usage(void* arg);
 
 void get_memory_usage(unsigned long* total, unsigned long* free) {
     FILE* file = fopen("/proc/meminfo", "r");
@@ -366,6 +365,15 @@ int32_t main(int argc, char *argv[]){
   uint8_t     help, verbose, force, nTar = 1;
   clock_t     stop = 0, start = clock();
 
+  ////////////////////////////////////////////////
+  /////////// CPU AND MEM USAGE //////////////////
+
+  pthread_t monitor_thread;
+  int pid = getpid();
+
+  // Create a thread to monitor CPU usage
+  pthread_create(&monitor_thread, NULL, get_cpu_usage, &pid);
+
   //////////////////////////////////////////
   /////////   MEM USAGE CALCULATE //////////
 
@@ -483,12 +491,18 @@ int32_t main(int argc, char *argv[]){
 
   ////////////////////////////////////////////////
   /////////// CPU AND MEM USAGE //////////////////
-  get_cpu_usage(getpid());
+  keep_running = false;
+
+  // Wait for the monitoring thread to finish
+  pthread_join(monitor_thread, NULL);
+
 
   get_memory_usage(&mem_total, &mem_free_end);
   mem_used = mem_free_beg - mem_free_end;
+  ram_total = (int)(mem_total/1000);
   printf("\nMemory used: %lu out of %lu kb", mem_used, mem_total);
-  printf("\nCPU usage: %d", avgUsage);
+  printf("\nCPU usage: %d%%\n", cpu_avg);
+  printf("\nRAM usage: %d MB out of %d MB\n", ram_avg*ram_total/100, ram_total);
 
   ////////////////////////////////////////////////
 

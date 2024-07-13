@@ -14,6 +14,8 @@
 #include <time.h>
 #include <malloc.h>
 #include <unistd.h>
+#include <pthread.h>
+#include <stdbool.h>
 
 #include "defs.h"
 #include "common.h"
@@ -30,6 +32,39 @@
 #include "bitio.h"
 #include "arith.h"
 #include "arith_aux.h"
+
+
+///////////////////////////////////////////////////////////
+////////// RAM USAGE //////////////////////////////////////
+
+volatile bool keep_running = true;
+
+unsigned long mem_total, mem_free_beg, mem_free_end, mem_used;
+int cpu_avg, ram_avg, ram_total;
+
+extern void* get_cpu_usage(void* arg);
+
+void get_memory_usage(unsigned long* total, unsigned long* free) {
+    FILE* file = fopen("/proc/meminfo", "r");
+    if (!file) {
+        perror("fopen");
+        exit(EXIT_FAILURE);
+    }
+
+    char buffer[256];
+    while (fgets(buffer, sizeof(buffer), file)) {
+        if (sscanf(buffer, "MemTotal: %lu kB", total) == 1 ||
+            sscanf(buffer, "MemFree: %lu kB", free) == 1) {
+            // Do nothing, just parsing
+        }
+    }
+
+    fclose(file);
+}
+
+//////////////////////////////////////////////////////////
+
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // ENCODE HEADER
@@ -514,6 +549,22 @@ int main(int argc, char **argv){
   
   P = (PARAM *) Calloc(1, sizeof(PARAM));
 
+  ////////////////////////////////////////////////
+  /////////// CPU AND MEM USAGE //////////////////
+
+  pthread_t monitor_thread;
+  int pid = getpid();
+
+  // Create a thread to monitor CPU usage
+  pthread_create(&monitor_thread, NULL, get_cpu_usage, &pid);
+
+  //////////////////////////////////////////
+  /////////   MEM USAGE CALCULATE //////////
+
+  get_memory_usage(&mem_total, &mem_free_beg);
+
+  /////////////////////////////////////////
+
   if((P->help = ArgState(DEFAULT_HELP, p, argc, "-h")) == 1 || argc < 2){
     PrintMenu();
     return EXIT_SUCCESS;
@@ -618,6 +669,24 @@ int main(int argc, char **argv){
     CLOCKS_PER_SEC); 
 
   fprintf(stderr, "Done!                        \n");  // SPACES ARE VALID!
+
+  ////////////////////////////////////////////////
+  /////////// CPU AND MEM USAGE //////////////////
+  keep_running = false;
+
+  // Wait for the monitoring thread to finish
+  pthread_join(monitor_thread, NULL);
+
+
+  get_memory_usage(&mem_total, &mem_free_end);
+  mem_used = mem_free_beg - mem_free_end;
+  ram_total = (int)(mem_total / 1000);
+  printf("\nMemory used: %lu out of %lu kb", mem_used, mem_total);
+  printf("\nCPU usage: %d%%\n", cpu_avg);
+  printf("\nRAM usage: %d mb out of %d mb\n", ram_avg*ram_total/100, ram_total);
+
+  ////////////////////////////////////////////////
+
   return 0;
   }
 
