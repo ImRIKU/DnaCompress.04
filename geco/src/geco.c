@@ -24,7 +24,8 @@
 
 unsigned long mem_total, mem_free_beg, mem_free_end, mem_used;
 int avgUsage;
-int usage[5];
+int usage[5]; //increase if want to take >5 cpu usage input
+int count = 0;
 
 extern int get_cpu_usage(int pid);
 
@@ -542,7 +543,7 @@ int32_t main(int argc, char *argv[]){
     headerBytes += I[n].header;
     }
     /////////// CPU AND MEM USAGE //////////////////
-    usage[0] = get_cpu_usage(getpid());
+    usage[count++] = get_cpu_usage(getpid());
 
 
   if(P->nTar > 1)
@@ -554,7 +555,7 @@ int32_t main(int argc, char *argv[]){
       (8.0*I[n].bytes)/(2*I[n].size));
       }
   /////////// CPU AND MEM USAGE //////////////////
-  usage[1] = get_cpu_usage(getpid());
+  usage[count++] = get_cpu_usage(getpid());
 
 
   fprintf(stdout, "Total bytes: %"PRIu64" (", totalBytes);
@@ -567,18 +568,19 @@ int32_t main(int argc, char *argv[]){
 
   ////////////////////////////////////////////////
   /////////// CPU AND MEM USAGE //////////////////
-  usage[2] = get_cpu_usage(getpid());
+  usage[count++] = get_cpu_usage(getpid());
   int sum_cpu = 0, ix, avg_cpu;
-  for (ix = 0; ix < 3; ix++){
+  for (ix = 0; ix < count; ix++){
     sum_cpu += usage[ix];
   }
 
-  avg_cpu = sum_cpu/3;
+  avg_cpu = sum_cpu/count;
   
 
   get_memory_usage(&mem_total, &mem_free_end);
-  mem_used = mem_free_beg - mem_free_end;
-  printf("\nMemory used: %lu out of %lu kb", mem_used, mem_total);
+  if(mem_free_beg > mem_free_end)
+    mem_used = mem_free_beg - mem_free_end;
+  printf("\nMemory used: %lu kb out of %lu kb", mem_used, mem_total);
   printf("\nCPU usage: %d%%\n", avg_cpu);
 
   ////////////////////////////////////////////////

@@ -17,8 +17,8 @@ OBJS   = bitio.o arith.o arith_aux.o levels.o common.o msg.o mem.o dna.o \
 all:
 	$(MAKE) progs
 progs: $(PROGS)
-$(BIN)/JARVIS: Jarvis.c $(DEPS) $(OBJS)
-	$(CC) $(CFLAGS) -o $(BIN)/JARVIS Jarvis.c $(OBJS) $(LIBS)
+$(BIN)/JARVIS: Jarvis.c cpuUsage.c $(DEPS) $(OBJS)
+	$(CC) $(CFLAGS) -o $(BIN)/JARVIS Jarvis.c cpuUsage.c $(OBJS) $(LIBS)
 bitio.o: bitio.c bitio.h
 	$(CC) -c $(CFLAGS) bitio.c
 arith.o: arith.c arith.h

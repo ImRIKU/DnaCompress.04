@@ -22,7 +22,8 @@
 
 unsigned long mem_total, mem_free_beg, mem_free_end, mem_used;
 int avgUsage;
-int usage[5];
+int usage[5]; //increase it if want to take >5 cpu usage input
+int count=0;
 
 extern int get_cpu_usage(int pid);
 
@@ -476,24 +477,25 @@ int32_t main(int argc, char *argv[]){
     }
 
     /////////// CPU AND MEM USAGE //////////////////
-    usage[0] = get_cpu_usage(getpid());
+    usage[count++] = get_cpu_usage(getpid());
 
   stop = clock();
   fprintf(stderr, "Spent %g sec.\n", ((double)(stop-start))/CLOCKS_PER_SEC);
 
   ////////////////////////////////////////////////
   /////////// CPU AND MEM USAGE //////////////////
-  usage[1] = get_cpu_usage(getpid());
+  usage[count++] = get_cpu_usage(getpid());
 
   int sum_cpu = 0, ix, avg_cpu;
-  for (ix = 0; ix < 2; ix++){
+  for (ix = 0; ix < count; ix++){
     sum_cpu += usage[ix];
   }
 
-  avg_cpu = sum_cpu/2;
+  avg_cpu = sum_cpu/count;
 
   get_memory_usage(&mem_total, &mem_free_end);
-  mem_used = mem_free_beg - mem_free_end;
+  if(mem_free_beg > mem_free_end)
+    mem_used = mem_free_beg - mem_free_end;
   printf("\nMemory used: %lu out of %lu kb", mem_used, mem_total);
   printf("\nCPU usage: %d%%\n", avg_cpu);
 

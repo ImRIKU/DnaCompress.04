@@ -14,6 +14,7 @@
 #include <time.h>
 #include <malloc.h>
 #include <unistd.h>
+#include <sys/types.h>
 
 #include "defs.h"
 #include "common.h"
@@ -30,6 +31,37 @@
 #include "bitio.h"
 #include "arith.h"
 #include "arith_aux.h"
+
+///////////////////////////////////////////////////////////
+////////// RAM USAGE //////////////////////////////////////
+
+unsigned long mem_total, mem_free_beg, mem_free_end, mem_used;
+int avgUsage;
+int usage[5]; //increase if want to take >5 cpu usage input
+int count = 0;
+
+extern int get_cpu_usage(int pid);
+
+void get_memory_usage(unsigned long* total, unsigned long* free) {
+    FILE* file = fopen("/proc/meminfo", "r");
+    if (!file) {
+        perror("fopen");
+        exit(EXIT_FAILURE);
+    }
+
+    char buffer[256];
+    while (fgets(buffer, sizeof(buffer), file)) {
+        if (sscanf(buffer, "MemTotal: %lu kB", total) == 1 ||
+            sscanf(buffer, "MemFree: %lu kB", free) == 1) {
+            // Do nothing, just parsing
+        }
+    }
+
+    fclose(file);
+}
+
+//////////////////////////////////////////////////////////
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // ENCODE HEADER
@@ -514,6 +546,13 @@ int main(int argc, char **argv){
   
   P = (PARAM *) Calloc(1, sizeof(PARAM));
 
+  //////////////////////////////////////////
+  /////////   MEM USAGE CALCULATE //////////
+
+  get_memory_usage(&mem_total, &mem_free_beg);
+
+  /////////////////////////////////////////
+
   if((P->help = ArgState(DEFAULT_HELP, p, argc, "-h")) == 1 || argc < 2){
     PrintMenu();
     return EXIT_SUCCESS;
@@ -606,10 +645,16 @@ int main(int argc, char **argv){
     if(P->verbose) PrintArgs(P);
     fprintf(stderr, "Compressing ...\n"); 
     Compress(P, argv[argc-1]);
+    
+    /////////// CPU AND MEM USAGE //////////////////
+    usage[count++] = get_cpu_usage(getpid());
     }
   else{
     fprintf(stderr, "Decompressing ...\n"); 
     Decompress(argv[argc-1]);
+
+    /////////// CPU AND MEM USAGE //////////////////
+    usage[count++] = get_cpu_usage(getpid());
     }
 
   stop = clock();
@@ -618,6 +663,27 @@ int main(int argc, char **argv){
     CLOCKS_PER_SEC); 
 
   fprintf(stderr, "Done!                        \n");  // SPACES ARE VALID!
+
+
+  ////////////////////////////////////////////////
+  /////////// CPU AND MEM USAGE //////////////////
+  usage[count++] = get_cpu_usage(getpid());
+  int sum_cpu = 0, ix, avg_cpu;
+  for (ix = 0; ix < count; ix++){
+    sum_cpu += usage[ix];
+  }
+
+  avg_cpu = sum_cpu/count;
+  
+
+  get_memory_usage(&mem_total, &mem_free_end);
+  if(mem_free_beg > mem_free_end)
+    mem_used = mem_free_beg - mem_free_end;
+  printf("\nMemory used: %lu kb out of %lu kb", mem_used, mem_total);
+  printf("\nCPU usage: %d%%\n", avg_cpu);
+
+  ////////////////////////////////////////////////
+
   return 0;
   }
 
