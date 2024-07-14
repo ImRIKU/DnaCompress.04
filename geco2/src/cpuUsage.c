@@ -5,14 +5,26 @@
 #include <sys/sysinfo.h>
 #include <stdbool.h>
 
-extern int cpu_avg;
-extern int ram_avg;
+#include "mem.h"
+#include "defs.h"
+#include "msg.h"
+#include "buffer.h"
+#include "levels.h"
+#include "common.h"
+#include "pmodels.h"
+#include "context.h"
+#include "bitio.h"
+#include "arith.h"
+#include "arith_aux.h"
+
+extern uint64_t cpu_avg;
+extern uint64_t ram_avg;
 extern volatile bool keep_running;
 
-int arr[60];
-int arr2[60];
-int i,count=0, count2=0;
-int num_cpus;
+uint64_t arr[60];
+uint64_t arr2[60];
+uint64_t i,count=0, count2=0;
+uint64_t num_cpus;
 
 void iniArr(){
     for(i=0;i<60;i++){
@@ -21,13 +33,15 @@ void iniArr(){
     }
 }
 
+int ds;
+
 void setUsage(){
     if(count == 0){
         cpu_avg = 0;
         ram_avg = 0;
         return;
     }
-    int sum=0, sum2=0;
+    uint64_t sum=0, sum2=0;
     for(i=0;i<60;i++){
         sum+=arr[i];
         sum2+=arr2[i];
@@ -37,14 +51,15 @@ void setUsage(){
 }
 
 void* get_cpu_usage(void* arg) {
-    int main_pid = *(int*)arg;
+    uint64_t main_pid = *(uint64_t*)arg;
     char cmd[128];
     char buffer[128];
     FILE* fp;
     char pid[16];
+    char statement[100];
     iniArr();
 
-    sprintf(pid, "%d", main_pid);
+    sprintf(pid, "%d", (int)main_pid);
     num_cpus = sysconf(_SC_NPROCESSORS_ONLN); // Get the number of CPUs
 
     while(count < 60 && keep_running){
@@ -59,7 +74,7 @@ void* get_cpu_usage(void* arg) {
         
         // Skip the header line
         if (fgets(buffer, sizeof(buffer), fp) == NULL) {
-            printf("Failed to retrieve CPU usage\n");
+            sprintf(statement, "Failed to retrieve CPU usage\n");
             pclose(fp);
             return NULL;
         }
@@ -70,7 +85,7 @@ void* get_cpu_usage(void* arg) {
             arr[count] = atoi(buffer);
         } 
         else {
-            printf("Failed to retrieve CPU usage\n");
+            sprintf(statement, "Failed to retrieve CPU usage\n");
         }
         pclose(fp);
 
@@ -85,7 +100,7 @@ void* get_cpu_usage(void* arg) {
         
         // Skip the header line
         if (fgets(buffer, sizeof(buffer), fp) == NULL) {
-            printf("Failed to retrieve RAM usage\n");
+            sprintf(statement, "Failed to retrieve RAM usage\n");
             pclose(fp);
             return NULL;
         }
@@ -95,7 +110,7 @@ void* get_cpu_usage(void* arg) {
             arr2[count++] = atoi(buffer);
         } 
         else {
-            printf("Failed to retrieve RAM usage\n");
+            sprintf(statement,"Failed to retrieve RAM usage\n");
         }
         
         pclose(fp);
