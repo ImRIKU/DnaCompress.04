@@ -459,7 +459,7 @@ int32_t main(int argc, char *argv[]){
   /////////// CPU AND MEM USAGE //////////////////
 
   pthread_t monitor_thread;
-  int pid = getpid();
+  uint64_t pid = (uint64_t)getpid();
 
   // Create a thread to monitor CPU usage
   pthread_create(&monitor_thread, NULL, get_cpu_usage, &pid);

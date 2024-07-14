@@ -33,7 +33,6 @@ void iniArr(){
     }
 }
 
-int ds;
 
 void setUsage(){
     if(count == 0){
