@@ -607,10 +607,13 @@ int32_t main(int argc, char *argv[]){
   if(mem_free_beg > mem_free_end)
     mem_used = mem_free_beg - mem_free_end;
   ram_total = (uint64_t)(mem_total / 1000);
-  printf("\nMemory used: %ld out of %ld kb", mem_used, mem_total);
-  printf("\nCPU usage: %ld%%\n", cpu_avg);
-  printf("\nRAM usage: %ld mb out of %ld mb\n", ram_avg*ram_total/100, ram_total);
+  // printf("\nMemory used: %ld out of %ld kb", mem_used, mem_total);
+  // printf("\nCPU usage: %ld%%\n", cpu_avg);
+  // printf("\nRAM usage: %ld mb out of %ld mb\n", ram_avg*ram_total/100, ram_total);
 
+	fprintf(stdout,"Memory used: %"PRIu64" kb out of %"PRIu64" kb \n", mem_used, mem_total);
+	fprintf(stdout,"CPU usage: %"PRIu64" %%\n", cpu_avg);
+	fprintf(stdout,"RAM usage: %"PRIu64" mb out of %"PRIu64" mb\n", ram_avg*ram_total/100, ram_total);
   ////////////////////////////////////////////////
   return EXIT_SUCCESS;
   }

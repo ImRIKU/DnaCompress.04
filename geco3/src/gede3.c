@@ -25,12 +25,12 @@
 
 volatile bool keep_running = true;
 
-unsigned long mem_total, mem_free_beg, mem_free_end, mem_used;
-int cpu_avg, ram_avg, ram_total;
+uint64_t mem_total, mem_free_beg, mem_free_end, mem_used;
+uint64_t cpu_avg, ram_avg, ram_total;
 
 extern void* get_cpu_usage(void* arg);
 
-void get_memory_usage(unsigned long* total, unsigned long* free) {
+void get_memory_usage(uint64_t* total, uint64_t* free) {
     FILE* file = fopen("/proc/meminfo", "r");
     if (!file) {
         perror("fopen");
@@ -39,8 +39,8 @@ void get_memory_usage(unsigned long* total, unsigned long* free) {
 
     char buffer[256];
     while (fgets(buffer, sizeof(buffer), file)) {
-        if (sscanf(buffer, "MemTotal: %lu kB", total) == 1 ||
-            sscanf(buffer, "MemFree: %lu kB", free) == 1) {
+        if (sscanf(buffer, "MemTotal: %ld kB", total) == 1 ||
+            sscanf(buffer, "MemFree: %ld kB", free) == 1) {
             // Do nothing, just parsing
         }
     }
@@ -447,7 +447,7 @@ int32_t main(int argc, char *argv[]){
   /////////// CPU AND MEM USAGE //////////////////
 
   pthread_t monitor_thread;
-  int pid = getpid();
+  uint64_t pid = (uint64_t)getpid();
 
   // Create a thread to monitor CPU usage
   pthread_create(&monitor_thread, NULL, get_cpu_usage, &pid);
@@ -572,11 +572,11 @@ int32_t main(int argc, char *argv[]){
   get_memory_usage(&mem_total, &mem_free_end);
   if(mem_free_beg > mem_free_end)
     mem_used = mem_free_beg - mem_free_end;
-  ram_total = (int)(mem_total / 1000);
+  ram_total = (uint64_t)(mem_total / 1000);
   if(ram_avg == 0) ram_avg=1;
-  printf("\nMemory used: %lu out of %lu kb", mem_used, mem_total);
-  printf("\nCPU usage: %d%%\n", cpu_avg);
-  printf("\nRAM usage: %d mb out of %d mb\n", ram_avg*ram_total/100, ram_total);
+  fprintf(stdout,"Memory used: %"PRIu64" kb out of %"PRIu64" kb \n", mem_used, mem_total);
+	fprintf(stdout,"CPU usage: %"PRIu64" %%\n", cpu_avg);
+	fprintf(stdout,"RAM usage: %"PRIu64" mb out of %"PRIu64" mb\n", ram_avg*ram_total/100, ram_total);
 
   ////////////////////////////////////////////////
 

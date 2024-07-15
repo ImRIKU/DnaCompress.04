@@ -55,13 +55,12 @@ void* get_cpu_usage(void* arg) {
     char buffer[128];
     FILE* fp;
     char pid[16];
-    char statement[100];
     iniArr();
 
     sprintf(pid, "%d", (int)main_pid);
     num_cpus = sysconf(_SC_NPROCESSORS_ONLN); // Get the number of CPUs
 
-    while(count < 60 && keep_running){
+    do {
         // Step 2: Find the CPU usage of the process using the PID  //////////////////////// CPU
         snprintf(cmd, sizeof(cmd), "ps -p %s -o %%cpu", pid);
 
@@ -73,7 +72,7 @@ void* get_cpu_usage(void* arg) {
         
         // Skip the header line
         if (fgets(buffer, sizeof(buffer), fp) == NULL) {
-            sprintf(statement, "Failed to retrieve CPU usage\n");
+            fprintf(stdout , "Failed to retrieve CPU usage\n");
             pclose(fp);
             return NULL;
         }
@@ -84,7 +83,7 @@ void* get_cpu_usage(void* arg) {
             arr[count] = atoi(buffer);
         } 
         else {
-            sprintf(statement, "Failed to retrieve CPU usage\n");
+            fprintf(stdout , "Failed to retrieve CPU usage\n");
         }
         pclose(fp);
 
@@ -99,7 +98,7 @@ void* get_cpu_usage(void* arg) {
         
         // Skip the header line
         if (fgets(buffer, sizeof(buffer), fp) == NULL) {
-            sprintf(statement, "Failed to retrieve RAM usage\n");
+            fprintf(stdout , "Failed to retrieve RAM usage\n");
             pclose(fp);
             return NULL;
         }
@@ -109,13 +108,13 @@ void* get_cpu_usage(void* arg) {
             arr2[count++] = atoi(buffer);
         } 
         else {
-            sprintf(statement,"Failed to retrieve RAM usage\n");
+            fprintf(stdout ,"Failed to retrieve RAM usage\n");
         }
         
         pclose(fp);
 
         sleep(1);
-    }
+    }while(count < 60 && keep_running);
     setUsage();
     return NULL;
 }
