@@ -8,6 +8,8 @@
 #include <omp.h>
 // #include "config.h"
 #include <cstdint>
+#include <pthread.h>
+#include <unistd.h>
 
 ///////////////////////////////////////////////////////////
 ////////// RAM USAGE //////////////////////////////////////
@@ -1260,6 +1262,23 @@ int main(int argc, char *argv[]) {
 	// for (int i = 0; i < argc; ++i) {
 	// 	fprintf(stderr, "%s\n", argv[i]);
 	// }
+
+	////////////////////////////////////////////////
+	/////////// CPU AND MEM USAGE //////////////////
+
+	pthread_t monitor_thread;
+	int pid = getpid();
+
+	// Create a thread to monitor CPU usage
+	pthread_create(&monitor_thread, NULL, get_cpu_usage, &pid);
+
+	//////////////////////////////////////////
+	/////////   MEM USAGE CALCULATE //////////
+
+	get_memory_usage(&mem_total, &mem_free_beg);
+
+	/////////////////////////////////////////
+
 	folder = argv[1];
 	int n_thc = 0;
 
@@ -1347,4 +1366,24 @@ int main(int argc, char *argv[]) {
 		}
 		fclose(fpresult);
 	}
+
+	////////////////////////////////////////////////
+	/////////// CPU AND MEM USAGE //////////////////
+	keep_running = false;
+
+	// Wait for the monitoring thread to finish
+	pthread_join(monitor_thread, NULL);
+
+
+	get_memory_usage(&mem_total, &mem_free_end);
+	if(mem_free_beg > mem_free_end)
+	mem_used = mem_free_beg - mem_free_end;
+	ram_total = (int)(mem_total/1000);
+	fprintf(stdout,"Memory used: %d kb out of %d kb \n", mem_used, mem_total);
+	fprintf(stdout,"CPU usage: %d %%\n", cpu_avg);
+	fprintf(stdout,"RAM usage: %d mb out of %d mb\n", ram_avg*ram_total/100, ram_total);
+
+	////////////////////////////////////////////////
+
+	return 0;
 }

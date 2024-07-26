@@ -34,6 +34,7 @@ void setUsage(){
         sum+=arr[i];
         sum2+=arr2[i];
     }
+    printf("Sum_cpu: %d, Sum_ram: %d", sum, sum2);
     cpu_avg = sum/count;
     ram_avg = sum2/count;
 }

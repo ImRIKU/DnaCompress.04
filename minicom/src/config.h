@@ -1,8 +1,8 @@
 #pragma once
 #define readlen 60
 #define num_thr 24
-#define uniqid "ufb1088b2b9"
-#define output "output_b6fc9938c0/"
+#define uniqid "u7b4c380021"
+#define output "output_e27331510e/"
 #define inik 0
 #define inithr 0
 #define inimaxthr 0
