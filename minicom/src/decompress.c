@@ -1384,6 +1384,4 @@ int main(int argc, char *argv[]) {
 	fprintf(stdout,"RAM usage: %d mb out of %d mb\n", ram_avg*ram_total/100, ram_total);
 
 	////////////////////////////////////////////////
-
-	return 0;
 }
